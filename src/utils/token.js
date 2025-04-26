@@ -31,6 +31,7 @@ const createNewToken = async (amount) => {
     })
     const res = await client.waitForTransaction({ digest: excRes.digest })
     console.log("transaction result:", res)
+    mergeFLXA()
     return res
   } catch (err) {
     console.error(err)
@@ -61,7 +62,7 @@ const mergeFLXA = async () => {
       transaction: tx,
     })
     const res = await client.waitForTransaction({ digest: excRes.digest })
-    console.log("transaction result:", res)
+    console.log("merge transaction result:", res)
     return res
   } catch (err) {
     console.error(err)

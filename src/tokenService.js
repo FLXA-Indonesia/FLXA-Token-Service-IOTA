@@ -1,5 +1,5 @@
 const db = require('./config/db')
-const { createNewToken, calcReward, getDebugInfo, mergeFLXA } = require('./utils/token')
+const { createNewToken, calcReward, getDebugInfo, mergeFLXA, transferToken, calcAmount } = require('./utils/token')
 
 const MintToken = async (transactionId) => {
   try {
@@ -57,8 +57,58 @@ const Merge = async () => {
   }
 }
 
+const Transfer = async (address, userId, transferedAmount) => {
+  if (transferedAmount < 50) {
+    return { code: 400, error: 'minimum transfer is 50 FLXA' }
+  }
+  try{
+    const queryResult = await db.query(`
+      SELECT token_balance_id as "tokenBalanceId", token_balance_amount as "tokenBalanceAmount" FROM "Token_balance" WHERE user_id  = $1
+      `, [userId])
+    if (queryResult.rowCount === 0) {
+      return { code: 404, error: 'invalid id. user not exists' }
+    }
+    const {tokenBalanceId, tokenBalanceAmount} = queryResult.rows[0]
+    if (tokenBalanceAmount < transferedAmount) {
+      return { code: 400, error: 'insufficient balance' }
+    }
+    const txRes = await transferToken(address, transferedAmount)
+    if (txRes.error) {
+      return { code: 500, error: contractResult.error }
+    }
+    const { digest, timestampMs } = txRes
+    const transferResult = await db.query(`SELECT transfer_token($1, $2, $3, $4)`,
+      [tokenBalanceId, transferedAmount, digest, new Date(Number(timestampMs)).toISOString()]
+    )
+    return { data: { transactionId: transferResult.rows[0].transfer_token } }
+  } catch (err) {
+    console.error(err)
+    return {code:500, error:'failed to merge'}
+  }
+}
+
+
+const GetTokenAmount = async (userId) => {
+  try {
+    const qResult = await db.query(`SELECT token_balance_id as "tokenBalanceId", token_balance_amount as amount
+      FROM "Token_balance" WHERE user_id = $1`, [userId])
+    if (qResult.rowCount === 0) {
+      return {code: 404, error:'invalid id. user not exists'}
+    }
+    const {tokenBalanceId, amount} = qResult.rows[0]
+    return { data: {
+      tokenBalanceId, amount
+    }}
+  } catch (err) {
+    console.error(err)
+    return {code: 500, error:'failed to get token amount'}
+  }
+}
+
 module.exports = {
   MintToken,
   Debug,
-  Merge
+  Merge,
+  Transfer,
+  GetTokenAmount,
 }

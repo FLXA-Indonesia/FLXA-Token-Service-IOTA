@@ -84,9 +84,45 @@ const getDebugInfo = async () => {
   }
 }
 
+const transferToken = async (address, amount) => {
+  try {
+    const tx = new Transaction()
+    tx.moveCall({
+      package: process.env.FLXA_PACKAGE_ID,
+      module: "flxa",
+      function: "transfer_flxa",
+      arguments: [
+        tx.object(process.env.FLXA_ORIGIN),
+        tx.pure.address(address),
+        tx.pure.u64(amount * 1000),
+      ]
+    })
+    const payment = await setGasPayment()
+    tx.setGasPayment([{
+      objectId: payment.coinObjectId,
+      digest: payment.digest,
+      version: payment.version,
+    }])
+    tx.setGasBudget(10000000)
+    const mnemonic = process.env.FLXA_SECRET
+    const keypair = Ed25519Keypair.deriveKeypair(mnemonic)
+    const excRes = await client.signAndExecuteTransaction({
+      signer: keypair,
+      transaction: tx,
+    })
+    const res = await client.waitForTransaction({ digest: excRes.digest })
+    console.log("transaction result:", res)
+    return res
+  } catch (err) {
+    console.error(err)
+    return { error: "failed to transfer" }
+  }
+}
+
 module.exports = {
   createNewToken,
   calcReward,
   getDebugInfo,
   mergeFLXA,
+  transferToken,
 }

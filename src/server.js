@@ -36,7 +36,9 @@ app.get('/', async (req, res) => {
 })
 app.post('/token/mint', c.mintTokenHandler)
 app.get('/token/debug', c.debug)
-app.post('/token/merge', c.merge)
+app.get('/token/merge', c.merge)
+app.post('/token/transfer', c.transfer)
+app.get('/token/amount/:userId', c.getTokenAmount)
 
 
 // ROUTE ERROR HANDLING

@@ -134,10 +134,51 @@ const transferToken = async (address, amount) => {
   }
 }
 
+const burnToken = async (amount) => {
+  try {
+    const tx = new Transaction()
+    tx.moveCall({
+      package: process.env.FLXA_PACKAGE_ID,
+      module: "flxa",
+      function: "redeem_to_services",
+      arguments: [
+        tx.object(process.env.FLXA_ORIGIN),
+        tx.object(process.env.FLXA_TREASURY_CAP),
+        tx.pure.u64(amount),
+      ]
+    })
+    const payment = await setGasPayment()
+    tx.setGasPayment([{
+      objectId: payment.coinObjectId,
+      digest: payment.digest,
+      version: payment.version,
+    }])
+    tx.setGasBudget(10000000)
+    const mnemonic = process.env.FLXA_SECRET
+    const keypair = Ed25519Keypair.deriveKeypair(mnemonic)
+    const excRes = await client.signAndExecuteTransaction({
+      signer: keypair,
+      transaction: tx,
+    })
+    const res = await client.waitForTransaction({ digest: excRes.digest, options:{
+      showEffects: true,
+    } })
+    console.log("transaction result:", res)
+    if (res.effects.status.error) {
+      return { error: "failed to execute burn" }
+    }
+    return res
+  } catch (err) {
+    console.error(err)
+    return { error: "failed to burn" }
+  }
+}
+
 module.exports = {
   createNewToken,
   calcReward,
   getDebugInfo,
   mergeFLXA,
   transferToken,
+  burnToken,
 }

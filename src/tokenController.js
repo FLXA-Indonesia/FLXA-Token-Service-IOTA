@@ -62,3 +62,16 @@ exports.getRedeemBonuses = async(req, res) => {
   }
   return res.status(200).json(srv)
 }
+
+
+exports.redeemToBonus = async(req, res) => {
+  const { userId, bonusId, phone } = req.body
+  if (!userId || !bonusId || !phone) {
+    return res.status(400).json({error: 'missing required field. (userId, bonusId, phone)'})
+  }
+  const srv = await service.RedeemTokenToBonus(userId, bonusId, phone)
+  if (srv.error) {
+    return res.status(srv.code).json({error: srv.error})
+  }
+  return res.status(200).json(srv)
+}

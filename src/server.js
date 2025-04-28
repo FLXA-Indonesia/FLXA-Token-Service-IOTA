@@ -40,6 +40,7 @@ app.get('/token/merge', c.merge)
 app.post('/token/transfer', c.transfer)
 app.get('/token/amount/:userId', c.getTokenAmount)
 app.get('/token/bonus', c.getRedeemBonuses) // query ?operatorId=
+app.post('/token/redeem', c.redeemToBonus)
 
 
 // ROUTE ERROR HANDLING

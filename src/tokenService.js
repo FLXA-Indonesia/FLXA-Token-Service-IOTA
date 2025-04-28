@@ -1,5 +1,6 @@
+const { token } = require('morgan')
 const db = require('./config/db')
-const { createNewToken, calcReward, getDebugInfo, mergeFLXA, transferToken, calcAmount } = require('./utils/token')
+const { createNewToken, calcReward, getDebugInfo, mergeFLXA, transferToken, burnToken } = require('./utils/token')
 
 const MintToken = async (transactionId) => {
   try {
@@ -129,6 +130,40 @@ const GetRedeemBonuses = async(operatorId) => {
   }
 }
 
+
+const RedeemTokenToBonus = async (userId, bonusId, targetPhone) => {
+  try {
+    const qResult = await db.query(`SELECT token_balance_id as "tokenBalanceId", token_balance_amount as amount
+      FROM "Token_balance" WHERE user_id = $1`, [userId])
+    if (qResult.rowCount === 0) {
+      return {code: 404, error:'invalid id. user not exists'}
+    }
+    const {tokenBalanceId, amount} = qResult.rows[0]
+    const bonusResult = await db.query(`SELECT token_price as "tokenPrice" FROM "Bonus" WHERE bonus_id = $1`, [bonusId])
+    if (bonusResult.rowCount === 0) {
+      return {code: 404, error:'invalid id. bonus not exists'}
+    }
+    const {tokenPrice} = bonusResult.rows[0]
+    if (amount < tokenPrice) {
+      return {code: 400, error:'insufficient balance'}
+    }
+    const burnResult = await burnToken(tokenPrice)
+    if (burnResult.error) {
+      return {code: 500, error: burnResult.error}
+    }
+    const {digest, timestampMs} = burnResult
+    const redeemResult = await db.query(`SELECT redeem_token($1, $2, $3, $4, $5)`,
+      [tokenBalanceId, digest, targetPhone, bonusId, new Date(Number(timestampMs)).toISOString()]
+    )
+    const dataString = redeemResult.rows[0].redeem_token
+    const [tokenTransactionId, tokenRedeemId] = dataString.replace(/[()]/g, "").split(",").map(Number);
+    return { data: {tokenTransactionId, tokenRedeemId} }
+  } catch (err) {
+    console.error(err)
+    return {code: 500, error:'failed to redeem token'}
+  }
+}
+
 module.exports = {
   MintToken,
   Debug,
@@ -136,4 +171,5 @@ module.exports = {
   Transfer,
   GetTokenAmount,
   GetRedeemBonuses,
+  RedeemTokenToBonus,
 }

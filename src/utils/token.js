@@ -29,8 +29,13 @@ const createNewToken = async (amount) => {
       signer: keypair,
       transaction: tx,
     })
-    const res = await client.waitForTransaction({ digest: excRes.digest })
+    const res = await client.waitForTransaction({ digest: excRes.digest, options: {
+      showEffects: true,
+    }} )
     console.log("transaction result:", res)
+    if (res.effects.status.error) {
+      return { error: "failed to execute mint"}
+    }
     mergeFLXA()
     return res
   } catch (err) {
@@ -61,8 +66,13 @@ const mergeFLXA = async () => {
       signer: keypair,
       transaction: tx,
     })
-    const res = await client.waitForTransaction({ digest: excRes.digest })
+    const res = await client.waitForTransaction({ digest: excRes.digest, options: {
+      showEffects: true,
+    } })
     console.log("merge transaction result:", res)
+    if (res.effects.status.error) {
+      return { error: "failed to execute mint" }
+    }
     return res
   } catch (err) {
     console.error(err)
@@ -110,8 +120,13 @@ const transferToken = async (address, amount) => {
       signer: keypair,
       transaction: tx,
     })
-    const res = await client.waitForTransaction({ digest: excRes.digest })
+    const res = await client.waitForTransaction({ digest: excRes.digest, options:{
+      showEffects: true,
+    } })
     console.log("transaction result:", res)
+    if (res.effects.status.error) {
+      return { error: "failed to execute transfer" }
+    }
     return res
   } catch (err) {
     console.error(err)

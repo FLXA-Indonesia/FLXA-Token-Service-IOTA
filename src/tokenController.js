@@ -50,3 +50,15 @@ exports.getTokenAmount = async(req, res) => {
   }
   return res.status(200).json(srv)
 }
+
+exports.getRedeemBonuses = async(req, res) => {
+  const { operatorId } = req.query
+  if(!operatorId) {
+    return res.status(400).json({error: 'missing required query param. (?operatorId=undefined)'})
+  }
+  const srv = await service.GetRedeemBonuses(operatorId)
+  if (srv.error) {
+    return res.status(srv.code).json({error: srv.error})
+  }
+  return res.status(200).json(srv)
+}

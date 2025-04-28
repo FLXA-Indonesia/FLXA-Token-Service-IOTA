@@ -74,7 +74,7 @@ const Transfer = async (address, userId, transferedAmount) => {
     }
     const txRes = await transferToken(address, transferedAmount)
     if (txRes.error) {
-      return { code: 500, error: contractResult.error }
+      return { code: 500, error: txRes.error }
     }
     const { digest, timestampMs } = txRes
     const transferResult = await db.query(`SELECT transfer_token($1, $2, $3, $4)`,
@@ -105,10 +105,35 @@ const GetTokenAmount = async (userId) => {
   }
 }
 
+
+const GetRedeemBonuses = async(operatorId) => {
+  try {
+    const qResult = await db.query(`SELECT
+      bonus_id, o.operator_id, operator_name, type, title, description, token_price, valid_until FROM "Bonus" b
+      JOIN "Operator" o ON o.operator_id=b.operator_id
+      WHERE b.operator_id = $1`, [operatorId])
+    const data = qResult.rows.map((row) => ({
+      id: row.bonus_id,
+      operatorId: row.operator_id,
+      operatorName: row.operator_name,
+      type: row.type,
+      title: row.title,
+      description: row.description,
+      price: row.token_price,
+      validTo: new Date(row.valid_until).toISOString(),
+    }))
+    return {data}
+  } catch (err) {
+    console.error(err)
+    return {code: 500, error: 'failed to retrieve bonuses'}
+  }
+}
+
 module.exports = {
   MintToken,
   Debug,
   Merge,
   Transfer,
   GetTokenAmount,
+  GetRedeemBonuses,
 }

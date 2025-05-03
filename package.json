@@ -4,8 +4,8 @@
   "main": "index.js",
   "scripts": {
     "lint:fix": "eslint --fix ./*.js",
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
   "keywords": [],
   "author": "",

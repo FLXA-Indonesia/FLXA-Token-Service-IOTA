@@ -12,7 +12,7 @@ dotenv.config()
 
 
 // DATABASE
-const db = require('./config/db.js')
+const db = require('./src/config/db.js')
   ; (async () => {
     await db.checkConnection()
   })()
@@ -30,7 +30,7 @@ app.use(cors())
 
 
 // ROUTES
-const c = require('./tokenController')
+const c = require('./src/tokenController.js')
 app.get('/', async (req, res) => {
   res.json({ message: 'FLXA Balance Service' })
 })

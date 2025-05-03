@@ -65,10 +65,7 @@ vercel
 Follow the prompts to complete the deployment process.
 
 ## API Endpoints
-The service exposes the following RESTful API endpoints:
-- `POST /api/token/create`: Issue a new FLXA token.
-- `POST /api/token/transfer`: Transfer tokens between accounts.
-- `GET /api/token/balance`: Retrieve token balance for an account.
+The service exposes the RESTful API endpoints accessible at `/src/routes`
 
 Note: Authentication and authorization mechanisms should be implemented to secure these endpoints.
 

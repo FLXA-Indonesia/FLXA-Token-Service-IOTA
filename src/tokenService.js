@@ -28,8 +28,8 @@ const MintToken = async (transactionId) => {
     if (mintResult.rowCount === 0) {
       return { code: 500, error: 'failed to mint token' }
     }
-      console.log({'data': mintResult})
-    return { data: { transactionId: mintResult.rows[0].earn_token }}
+      console.log({'data': mintResult.rows[0]})
+    return { data: { transacionAmount: txData.txAmount, tokenMinted: reward, transactionId: mintResult.rows[0].earn_token }}
   } catch (err) {
     console.error(err)
     return { code: 500, error: 'failed to mint token' }

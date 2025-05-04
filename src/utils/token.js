@@ -2,7 +2,7 @@ const { client, setGasPayment } = require('../config/tangle')
 const { Transaction } = require('@iota/iota-sdk/transactions');
 const { Ed25519Keypair } = require('@iota/iota-sdk/keypairs/ed25519');
 
-const calcReward = (txAmount) => txAmount * .008
+const calcReward = (txAmount) => txAmount * .0008
 const createNewToken = async (amount) => {
   try {
     const tx = new Transaction()

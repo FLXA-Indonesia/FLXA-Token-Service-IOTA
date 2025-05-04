@@ -25,6 +25,10 @@ const MintToken = async (transactionId) => {
     const {digest, timestampMs} = contractResult
     const mintResult = await db.query(`SELECT earn_token($1, $2, $3, $4)
       `, [txData.tokenBalanceId, reward, digest, new Date(Number(timestampMs)).toISOString()])
+    if (mintResult.rowCount === 0) {
+      return { code: 500, error: 'failed to mint token' }
+    }
+      console.log({'data': mintResult})
     return { data: { transactionId: mintResult.rows[0].earn_token }}
   } catch (err) {
     console.error(err)

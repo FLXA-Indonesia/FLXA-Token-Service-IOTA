@@ -23,13 +23,30 @@ const MintToken = async (transactionId) => {
       return { code: 500, error: contractResult.error }
     }
     const {digest, timestampMs} = contractResult
-    const mintResult = await db.query(`SELECT earn_token($1, $2, $3, $4)
-      `, [txData.tokenBalanceId, reward, digest, new Date(Number(timestampMs)).toISOString()])
-    if (mintResult.rowCount === 0) {
-      return { code: 500, error: 'failed to mint token' }
+    const tokenBalanceResult = await db.query(`
+      SELECT token_balance_id FROM "Transaction" t
+      JOIN "Token_balance" tb ON tb.user_id = t.user_id
+      WHERE t.transaction_id = $1;
+      `, [transactionId])
+    if (tokenBalanceResult.rowCount === 0) {
+      return { code: 404, error: 'invalid transaction. id not exists' }
     }
-      console.log({'data': mintResult.rows[0]})
-    return { data: { transacionAmount: txData.txAmount, tokenMinted: reward, transactionId: mintResult.rows[0].earn_token }}
+
+    const tokenTransactionResult = await db.query(`
+      INSERT INTO "Token_transaction" (token_balance_id, amount, type, digest, "timestamp")
+        VALUES ($1, $2, 'EARN', $3, $4) RETURNING token_tx_id
+      `, [tokenBalanceResult.rows[0].token_balance_id, reward, digest, new Date(Number(timestampMs)).toISOString()])
+    if (tokenTransactionResult.rowCount === 0) {
+      return { code: 500, error: 'failed to create token transaction' }
+    }
+    const updateTokenBalanceResult = await db.query(`
+      UPDATE "Token_balance" SET token_balance_amount = token_balance_amount + $1, last_digest = $2
+      WHERE token_balance_id = $3`, [reward, digest, tokenBalanceResult.rows[0].token_balance_id])
+    if (updateTokenBalanceResult.rowCount === 0) {
+      return { code: 500, error: 'failed to update token balance' }
+    }
+    console.log({ 'data': updateTokenBalanceResult.rows[0]})
+    return { data: { transacionAmount: txData.txAmount, tokenMinted: reward, tokenTransactionId: tokenTransactionResult.rows[0].token_tx_id } }
   } catch (err) {
     console.error(err)
     return { code: 500, error: 'failed to mint token' }
